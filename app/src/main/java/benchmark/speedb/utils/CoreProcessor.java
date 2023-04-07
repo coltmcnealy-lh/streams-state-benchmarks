@@ -67,10 +67,10 @@ public class CoreProcessor
 
         String[] split = st.getWfId().split("-");
         int wfNum = Integer.valueOf(split[split.length - 1]);
-        if (wfNum % 100 == 0) {
+        if (wfNum % 500 == 0) {
             System.out.println(
                 System.currentTimeMillis() +
-                "Wf " +
+                " Wf " +
                 wfNum +
                 " processing task " +
                 st.getTaskNumber()
@@ -159,6 +159,12 @@ public class CoreProcessor
         System.out.println("Doing a range scan in punctuator");
 
         int numEntries = 0;
+
+        // NOTE: it would be more efficient to do a `deleteRange` here. However,
+        // in the actual LittleHorse topology we only delete certain keys depending
+        // on what's in their value, so this implementation mirrors that workload
+        // better. And I also wanted to put rangescans in this test topology
+        // somewhere.
         try (TimerObjectIterator it = store.getTimersUntil(punctuationTime)) {
             while (it.hasNext()) {
                 Pair<String, TimerObject> pair = it.next();

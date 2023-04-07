@@ -15,6 +15,7 @@ import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Date;
 import java.util.Properties;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
@@ -74,6 +75,10 @@ public class BenchmarkServer extends MetricsServiceImplBase implements Closeable
         props.put("metrics.recording.level", "DEBUG");
 
         streams = new KafkaStreams(topo, props);
+
+        streams.setStateListener((oldState, newState) -> {
+            System.out.println(new Date().toString() + " new State: " + newState);
+        });
 
         grpcServer = ServerBuilder.forPort(5000).addService(this).build();
     }

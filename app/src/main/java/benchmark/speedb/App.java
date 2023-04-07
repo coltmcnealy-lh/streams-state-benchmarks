@@ -16,6 +16,7 @@ import com.google.protobuf.Empty;
 import com.google.protobuf.util.JsonFormat;
 import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
+import java.util.Date;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -24,6 +25,7 @@ public class App {
 
     public static void main(String[] args) throws InterruptedException, IOException {
         if (args.length < 1) {
+            System.out.println(new Date(1680900099579L));
             printHelp();
             System.exit(1);
         }
@@ -62,7 +64,8 @@ public class App {
                 try {
                     int numTests = Integer.parseInt(args[1]);
                     int testSize = Integer.parseInt(args[2]);
-                    launchTests(cfg, numTests, testSize);
+                    int numTasks = Integer.parseInt(args[3]);
+                    launchTests(cfg, numTests, testSize, numTasks);
                 } catch (Exception exn) {
                     exn.printStackTrace();
                     printHelp();
@@ -124,7 +127,12 @@ public class App {
         );
     }
 
-    private static void launchTests(Config config, int numTests, int testSize) {
+    private static void launchTests(
+        Config config,
+        int numTests,
+        int testSize,
+        int numTasks
+    ) {
         String wfPrefix = UUID.randomUUID().toString() + "-";
 
         // First, launch the workflows.
@@ -138,8 +146,7 @@ public class App {
             );
         }
 
-        int numTasksPerWorkflow = 100;
-        for (int taskNum = 0; taskNum < numTasksPerWorkflow; taskNum++) {
+        for (int taskNum = 0; taskNum < numTasks; taskNum++) {
             // Send task starts
             for (int wfNum = 0; wfNum < numTests; wfNum++) {
                 String wfId = wfPrefix + wfNum;
