@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package streamspeedb;
+
+option java_multiple_files = true;
+option java_package = "benchmark.speedb.proto";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+
+message Workflow {
+    string id = 1;
+    google.protobuf.Timestamp launch_time = 2;
+    google.protobuf.Timestamp start_time = 3;
+    bool completed = 4;
+    int32 current_task_run_number = 5;
+}
+
+message TaskRun {
+    string wf_id = 1;
+    int32 number = 2;
+    google.protobuf.Timestamp launch_time = 3;
+    google.protobuf.Timestamp start_time = 4;
+    google.protobuf.Timestamp complete_time = 5;
+    optional string payload = 6;
+}
+
+message TimerObject {
+    string payload = 1;
+    google.protobuf.Timestamp maturation_time = 2;
+    string guid = 3;
+}
+
+message MetricsWindow {
+    int64 total_task_starts = 1;
+    int64 total_task_start_latency = 2;
+    int64 max_task_start_latency = 3;
+
+    int64 total_task_completes = 4;
+    int64 total_task_complete_latency = 5;
+    int64 max_task_complete_latency = 6;
+
+    google.protobuf.Timestamp window_start = 7;
+
+    int64 messages_processed = 8;
+}
+
+message Command {
+    message StartWf {
+        string id = 1;
+    }
+
+    message StartTask {
+        string wf_id = 1;
+        int32 task_number = 2;
+    }
+
+    message CompleteTask {
+        string wf_id = 1;
+        int32 task_number = 2;
+        string payload = 3;
+    }
+
+    oneof command {
+        StartTask start_task = 1;
+        CompleteTask complete_task = 2;
+        StartWf start_wf = 3;
+    }
+}
+
+message KafkaStreamsMetricsReply {
+    map<string, string> metrics = 1;
+}
+
+message WorkflowMetricsQuery {
+    google.protobuf.Timestamp latest_window_start = 1;
+    int32 num_windows = 2;
+}
+
+message WorfklowMetricsResponse {
+    repeated MetricsWindow metrics = 1;
+}
+
+service MetricsService {
+    rpc KafkaStreamsMetrics(google.protobuf.Empty) returns (KafkaStreamsMetricsReply) {}
+    rpc WorkflowMetrics(WorkflowMetricsQuery) returns (WorfklowMetricsResponse) {}
+}
