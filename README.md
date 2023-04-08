@@ -258,30 +258,23 @@ This time, it took 1:36 minutes from when the first record was produced to the l
 
 It should also be noted that we waited for compaction to complete before starting this test. In production, we normally wouldn't stop the world for four minutes to let RocksDB do its thing.
 
-### Restoring 24GB
-
-I did `rm -r /tmp/kafkaState` and restarted the application, thus triggering a state restoration.
-
-### Moving to 36GB
-
-
-### Fresh Start Large Tasks
-
-
-### Large State Small Tasks
-
 
 ## Open Questions
 Some of the following questions relate to the underlying storage engine; others relate to the broker side of things.
 
 ### Processing Disruptions With Large Task Payloads
 
+When doing the tests, you will see that there are bumpy "pauses" when it looks like processing gets stuck for 1-2 seconds at a time. I haven't confirmed for sure what causes that, but I hypothesize it is due to rocksdb compaction. This will make it much harder for LittleHorse to meet a p99 latency SLA.
+
+It should also be noted that the pauses don't really occur with small amounts of state.
 
 ### Maximum "Safe" Partition Size
 
 How big is too big for data in one partition of a State Store? My very unscientific poll in the Kafka Streams slack channel (probably aged out by now) shows that around 20-35GB per partition, there start to be various issues with memory usage in RocksDB, broker compaction, super-long restore times, etc.
 
-SpeedB might make it feasible to grow larger.
+My benchmarks in this repository supported that unscientific poll by showing that performance starts to degrade a little around 10GB, and the degradation becomes sharp around 24GB. 
+
+SpeedB might hopefully make it feasible to grow larger.
 
 #### Broker-Side Compaction
 
@@ -289,7 +282,7 @@ Much ado has been made about RocksDB compaction taking longer and being less eff
 
 I think a good follow-up to this paper would be doing some profiling of compaction performance on the broker side as partition size grows. It seems like it's wise to keep each partition to 10GB or less.
 
-#### Many Partitions: KIP-848, KIP-500
+#### Many Partitions, KIP-500
 [Yugabyte](https://yugabyte.com) is my favorite example of a well-designed distributed database. They use a modified version of RocksDB as their storage engine. Yugabyte shards each RocksDB instance once it reaches 10GB of data, but it can support up to 64k "tablets" (shards). It has been proven to work in production systems with over 200TB of data.
 
 Streams gets a bad rap for storing large amounts of state. But I hypothesize that most of those issues (slow restoration times, RocksDB performance hits as state grows, inelasticity of moving state over) could be mitigated if a given topology had 500-1000 partitions rather than 20-50 partitions.
@@ -303,9 +296,8 @@ Many smaller partitions would enable:
 However, there are two downsides to this:
 
 1. ZooKeeper Kafka has a limit to how many partitions it can feasibly manage.
-2. Consumer Group Rebalances take longer with more partitions.
+2. There is overhead to running lots of RocksDB instances.
 
 Well, KIP-500 makes item 1 much less of a concern as Kafka can run with 10x the number of partitions with the same performance.
 
-And KIP-848 hopes to make it so that consumer instances are unaffected by a rebalance unless their assignments change. This would mean that _perhaps_ having many more small partitions would be reasonable.
-
+Having 2,000 input partitions would allow LittleHorse to safely manage 20TB of data. However, with the LH Topology that would mean 6,000 RocksDB instances _before_ standby replicas. Obviously, such a large deployment would involve a few dozen streams instances, so probably 250 stores per instance. And that has been done before and isn't a huge issue.
