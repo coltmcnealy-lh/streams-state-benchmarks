@@ -258,6 +258,27 @@ This time, it took 1:36 minutes from when the first record was produced to the l
 
 It should also be noted that we waited for compaction to complete before starting this test. In production, we normally wouldn't stop the world for four minutes to let RocksDB do its thing.
 
+## Example Benchmarks RocksDB LOG enabled
+
+This is the benchmark for which I have provided the db logs. It was run with the DB logging enabled; the benchmark above was run without logging enabled.
+
+I ran the following command:
+
+```
+for i in $(seq 1 20); do gradle run --args 'launchTests 1000 1000 1000' ;  done
+```
+
+It essentially launches 20 rounds of 1GB of work each. It's a total of 40M input records in Kafka. What is interesting is how long it takes from launching that command to having it complete.
+
+Each "Task Run" has 1KB of data. This is pretty much the average size we would expect in production LittleHorse (~100 bytes of output, 900 bytes of internal metadata).
+
+*THIS IS A VERY GOOD BENCHMARK TO OPTIMIZE*
+
+* The actual processing took: 33:29
+* After compaction, 22GB were used in RocksDB (27GB in changelog topic)
+* Restoration took about 17:45, which is not significantly faster than the processing.
+* Disk space usage ballooned up to 72G during the restoration.
+
 
 ## Open Questions
 Some of the following questions relate to the underlying storage engine; others relate to the broker side of things.

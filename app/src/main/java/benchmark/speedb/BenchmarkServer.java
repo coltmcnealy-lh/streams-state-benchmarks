@@ -24,6 +24,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StoreQueryParameters;
+import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
@@ -69,6 +70,10 @@ public class BenchmarkServer extends MetricsServiceImplBase implements Closeable
         props.put("application.id", "benchmark-speedb");
         props.put("state.dir", cfg.getStateDir());
         props.put("group.instance.id", "the-one-and-only");
+        props.put(
+            StreamsConfig.ROCKSDB_CONFIG_SETTER_CLASS_CONFIG,
+            RocksConfigSetter.class
+        );
 
         // Maybe might want this to be trace, but most rocksdb metrics
         // are "debug" so it should be good enough I think.
