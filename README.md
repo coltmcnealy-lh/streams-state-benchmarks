@@ -322,3 +322,52 @@ However, there are two downsides to this:
 Well, KIP-500 makes item 1 much less of a concern as Kafka can run with 10x the number of partitions with the same performance.
 
 Having 2,000 input partitions would allow LittleHorse to safely manage 20TB of data. However, with the LH Topology that would mean 6,000 RocksDB instances _before_ standby replicas. Obviously, such a large deployment would involve a few dozen streams instances, so probably 250 stores per instance. And that has been done before and isn't a huge issue.
+
+# Note: Compiling with SpeedB
+
+First, we're going to remove the RocksDB JNI so that we're certain we're using the correct SpeedB JNI. Let's compile the Uber-Jar:
+
+```
+./gradlew shadowJar
+```
+
+Next, navigate to `app/build/libs/` and then:
+
+```
+unzip app-all.jar -d app-all
+
+rm -r app-all/librocksdbjni-*
+
+jar cvf app-without-speedb.jar -C app-all .
+```
+
+Then, try running:
+
+```
+java -cp ./app-without-speedb.jar benchmark.speedb.App server
+```
+
+That should fail since we got rid of the RocksDB JNI and haven't yet put in the SpeedB one. To add SpeedB, let's download it (on my system, it's at `~/Downloads/speedbjni-2.3.0-linux64.jar`)
+
+```
+mkdir -p /tmp/speedb-surgery
+cd /tmp/speedb-surgery
+
+unzip ~/Downloads/speedbjni-2.3.0-linux64.jar -d speedb-jni-dir
+```
+
+If you do `ls speedb-jni-dir`, you should see a file like: `libspeedbjni-linux64.so`. 
+
+Navigate back to the `app/build/libs/` directory. Then:
+
+```
+cp /tmp/speedb-surgery/speedb-jni-dir/libspeedbjni-linux64.so app-all/librocksdbjni-linux64.so
+
+jar cvf app-with-speedb.jar -C app-all .
+```
+
+Now, when you try to run the app it should work:
+
+```
+java -cp ./app-with-speedb.jar benchmark.speedb.App server
+```

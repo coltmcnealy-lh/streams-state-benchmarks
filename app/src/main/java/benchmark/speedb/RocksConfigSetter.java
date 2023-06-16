@@ -2,6 +2,7 @@ package benchmark.speedb;
 
 import java.util.Map;
 import org.apache.kafka.streams.state.RocksDBConfigSetter;
+import org.rocksdb.CompactionStyle;
 import org.rocksdb.InfoLogLevel;
 import org.rocksdb.Options;
 import org.rocksdb.Statistics;
@@ -17,7 +18,9 @@ public class RocksConfigSetter implements RocksDBConfigSetter {
         final Map<String, Object> configs
     ) {
         System.out.println("Hello, there!");
-        options.setInfoLogLevel(InfoLogLevel.DEBUG_LEVEL);
+        // options.setInfoLogLevel(InfoLogLevel.DEBUG_LEVEL);
+        // options.setCompactionStyle(CompactionStyle.LEVEL);
+        // options.setWriteBufferSize(128000000);
     }
 
     @Override

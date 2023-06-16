@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.Properties;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
@@ -26,6 +27,7 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StoreQueryParameters;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.processor.StateRestoreListener;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
@@ -84,6 +86,38 @@ public class BenchmarkServer extends MetricsServiceImplBase implements Closeable
         streams.setStateListener((oldState, newState) -> {
             System.out.println(new Date().toString() + " new State: " + newState);
         });
+
+        streams.setGlobalStateRestoreListener(
+            new StateRestoreListener() {
+                public void onBatchRestored(
+                    TopicPartition tp,
+                    String unknown,
+                    long foo,
+                    long bar
+                ) {}
+
+                public void onRestoreStart(
+                    TopicPartition tp,
+                    String unknown,
+                    long foo,
+                    long bar
+                ) {
+                    System.out.println(
+                        "Starting restore at " + System.currentTimeMillis()
+                    );
+                }
+
+                public void onRestoreEnd(
+                    TopicPartition tp,
+                    String unknown,
+                    long bar
+                ) {
+                    System.out.println(
+                        "Finished restore at " + System.currentTimeMillis()
+                    );
+                }
+            }
+        );
 
         grpcServer = ServerBuilder.forPort(5000).addService(this).build();
     }

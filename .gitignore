@@ -1,3 +1,5 @@
+app-with-speedb.jar
+
 # Ignore binary and build stuff
 .gradle
 app/build
