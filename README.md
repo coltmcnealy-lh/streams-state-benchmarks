@@ -363,6 +363,8 @@ Navigate back to the `app/build/libs/` directory. Then:
 ```
 cp /tmp/speedb-surgery/speedb-jni-dir/libspeedbjni-linux64.so app-all/librocksdbjni-linux64.so
 
+# TODO: copy over the org/rocksdb files
+
 jar cvf app-with-speedb.jar -C app-all .
 ```
 

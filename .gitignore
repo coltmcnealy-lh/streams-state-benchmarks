@@ -4,6 +4,7 @@ app-with-speedb.jar
 .gradle
 app/build
 app/bin/
+*.jar
 
 
 # FOR THE TEST HARNESS:
